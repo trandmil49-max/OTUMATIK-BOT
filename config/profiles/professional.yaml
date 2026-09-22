@@ -1,0 +1,35 @@
+# PROFESSIONAL profile (SRS Part 19): "Maximum analysis quality,
+# institutional standards, highest filtering, lowest unnecessary
+# exposure, designed for long-term consistency." Stricter than
+# Conservative on confidence grading; equally tight on exposure.
+
+metadata:
+  strategy_profile: "professional"
+
+confidence:
+  minimum_confidence: 88.0
+  strong_grade: 88.0
+  very_strong_grade: 90.0
+  excellent_grade: 93.0
+  institutional_grade: 96.0
+
+risk:
+  min_risk_reward: 2.8
+  good_risk_reward: 3.0
+  excellent_risk_reward: 3.5
+  max_active_trades: 3
+  max_long_trades: 3
+  max_short_trades: 3
+  max_same_sector_exposure: 1
+  max_same_coin_exposure: 1
+  atr_stop_loss_multiplier: 1.6
+
+bitcoin:
+  health_threshold: 65.0
+  confirmation_required: true
+
+market_health:
+  health_threshold: 62.0
+
+coin_trust:
+  min_trades_for_trust_score: 15

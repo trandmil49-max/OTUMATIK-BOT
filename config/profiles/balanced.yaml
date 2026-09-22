@@ -1,0 +1,8 @@
+# BALANCED profile (SRS Part 19): "Balanced Confidence, Balanced Risk,
+# Balanced Frequency." This intentionally equals defaults.yaml — kept as an
+# explicit file (rather than "no profile selected") so profile switching
+# always follows the exact same code path for every profile, with no
+# special-cased default. Nothing to override here.
+
+metadata:
+  strategy_profile: "balanced"

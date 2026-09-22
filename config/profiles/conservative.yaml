@@ -1,0 +1,25 @@
+# CONSERVATIVE profile (SRS Part 19): "Higher Confidence, Lower Risk,
+# Fewer Signals, Higher Win Rate." Only the deltas from defaults.yaml are
+# listed; everything else is inherited.
+
+metadata:
+  strategy_profile: "conservative"
+
+confidence:
+  minimum_confidence: 85.0
+  strong_grade: 85.0
+
+risk:
+  min_risk_reward: 2.5
+  max_active_trades: 3
+  max_long_trades: 3
+  max_short_trades: 3
+  max_same_sector_exposure: 1
+  atr_stop_loss_multiplier: 1.8
+
+bitcoin:
+  health_threshold: 65.0
+  confirmation_required: true
+
+market_health:
+  health_threshold: 60.0

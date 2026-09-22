@@ -1,0 +1,137 @@
+# Baseline configuration for the Binance Futures Analysis Platform.
+# These values equal the Pydantic model defaults in config/schema.py —
+# duplicated here so the whole configuration surface is visible and
+# editable in one human-readable place without touching Python code.
+#
+# The active strategy profile (config/profiles/<name>.yaml) is layered on
+# top of this file. Environment variables are layered on top of that.
+
+metadata:
+  schema_version: "1.0.0"
+
+general:
+  bot_name: "Binance Futures Analysis Platform"
+  version: "8.0.0"
+  timezone: "Europe/Istanbul"
+  language: "tr"
+  run_mode: "paper"
+  debug_mode: false
+  auto_restart: true
+
+scanner:
+  fast_scan_interval_seconds: 30
+  deep_scan_interval_seconds: 120
+  max_concurrent_workers: 10
+  max_api_requests_per_minute: 1000
+  retry_count: 3
+  cache_lifetime_seconds: 300
+  coin_refresh_interval_seconds: 3600
+  min_24h_quote_volume_usdt: 5000000
+  min_history_candles: 200
+  max_spread_pct: 0.15
+  max_symbols_to_analyze: null  # null = no cap (analyze every Stage-1 survivor); set via MAX_SYMBOLS_TO_ANALYZE
+
+risk:
+  min_risk_reward: 2.0
+  good_risk_reward: 2.5
+  excellent_risk_reward: 3.0
+  max_active_trades: 5
+  max_long_trades: 5
+  max_short_trades: 5
+  max_same_sector_exposure: 2
+  max_same_coin_exposure: 1
+  break_even_enabled: true
+  dynamic_tp_enabled: true
+  dynamic_sl_enabled: true
+  trailing_stop_enabled: false
+  atr_stop_loss_multiplier: 1.5
+  max_stop_distance_pct: 0.08
+  signal_lifetime_hours: 24
+  signal_cooldown_minutes: null  # null = no cooldown; set via SIGNAL_COOLDOWN_MINUTES
+
+confidence:
+  minimum_confidence: 80.0
+  strong_grade: 80.0
+  very_strong_grade: 85.0
+  excellent_grade: 90.0
+  institutional_grade: 95.0
+
+bitcoin:
+  health_threshold: 60.0
+  trend_weight: 0.30
+  volatility_weight: 0.20
+  confirmation_required: true
+  # BTC/USDT dominance + DXY macro nudge on score_for_direction() -- see config/schema.py's BitcoinConfig docstring.
+  dominance_weight: 5.0
+  usdt_dominance_weight: 5.0
+  dxy_weight: 6.0
+  dominance_dead_zone_pct: 0.10
+
+# Module 23: Binance's official Top Trader Long/Short Ratio (account +
+# position) -- see engines/smart_money.py.
+smart_money:
+  account_ratio_weight: 0.5
+  position_ratio_weight: 0.5
+  period: "15m"
+
+market_health:
+  health_threshold: 55.0
+  funding_weight: 0.15
+  open_interest_weight: 0.15
+  liquidity_weight: 0.20
+  spread_weight: 0.15
+  trend_weight: 0.35
+
+coin_trust:
+  min_trades_for_trust_score: 10
+  max_trust_bonus: 5.0
+  max_trust_penalty: 10.0
+  new_coin_default_trust_score: 50.0
+
+telegram:
+  notification_level: "normal"
+  send_daily_reports: true
+  send_weekly_reports: true
+  send_monthly_reports: true
+  send_health_reports: true
+  max_messages_per_minute: 20
+
+reports:
+  daily_report_time: "23:55"
+  weekly_report_day: "sunday"
+  monthly_report_day: 1
+  export_csv: true
+  export_excel: false
+  export_json: true
+  export_pdf: false
+  min_trades_for_recommendation: 20
+
+database:
+  path: "data/platform.db"
+  backup_interval_hours: 24
+  retention_policy_days: null
+  enable_wal_mode: true
+  auto_vacuum: true
+  compression_enabled: false
+
+logging:
+  level: "INFO"
+  rotate_max_bytes: 10485760
+  rotate_backup_count: 5
+  archive_logs: true
+  log_directory: "logs"
+
+performance:
+  max_cpu_percent: 80.0
+  max_ram_mb: 1024
+  max_queue_size: 1000
+  max_scan_duration_seconds: 600
+
+api:
+  binance_base_url: "https://fapi.binance.com"
+  request_timeout_seconds: 10.0
+  max_retries: 3
+
+security:
+  mask_secrets_in_logs: true
+  allowed_config_sources: ["yaml", "env"]
