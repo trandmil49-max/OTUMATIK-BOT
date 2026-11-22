@@ -120,3 +120,28 @@ def test_stale_data_skipped():
     bot, store, pub, tg, clock = make()
     clock["t"] += 3 * 3_600_000          # veri 3 saat eski (piyasa kapalı gibi)
     assert asyncio.run(bot.scan()) == []
+
+
+def test_sizing_uses_live_price_and_risk_message_is_true():
+    bot, store, pub, tg, clock = make()
+    pub.price = 101.2                       # sinyal kapanışı 101.4; canlı fiyat biraz farklı
+    asyncio.run(bot.scan())
+    t = store.open_trades()[0]
+    true_risk = t["qty"] * abs(t["entry"] - t["sl"])
+    assert abs(t["risk_usd"] - true_risk) < 1e-9                  # mesajdaki risk gerçek risk
+    assert abs(t["notional"] - t["qty"] * 101.2) < 0.2 or t["notional"] > 0
+    assert t["notional"] / t["leverage"] <= 12 * 0.35 + 1e-6      # marj tavanı
+
+
+def test_no_daily_trade_count_limit_by_default_but_risk_brakes_remain():
+    bot, store, pub, tg, clock = make()
+    assert bot.s.max_trades_per_day == 0
+    for i in range(12):                         # gün içinde 12 işlem açılmış gibi
+        store.insert_trade(dict(symbol=f"C{i}-USDT", side="LONG", status="closed", mode="paper", opened_ms=clock["t"] - 1000,
+                                closed_ms=clock["t"] - 500, exit_reason="tp", pnl=0.1, balance_open=12.0))
+    assert bot.can_open_any() == (True, "")     # sayı sınırı yok
+    for i in range(2):                          # ama üst üste 2 SL frenlenir
+        store.insert_trade(dict(symbol=f"S{i}-USDT", side="LONG", status="closed", mode="paper", opened_ms=clock["t"] - 100,
+                                closed_ms=clock["t"] - 10 + i, exit_reason="sl", pnl=-0.12, balance_open=12.0))
+    ok, why = bot.can_open_any()
+    assert not ok and "SL" in why

@@ -11,11 +11,11 @@ Amaç: günde az ama kaliteli işlem. Kumar yok: setup yoksa işlem yok.
    - 4s trende ters değil
    - fiyat seviyeden uzaklaşmamış (kovalama yok), spike mumu yok, 24s'te %15+ oynamamış
    - skor ≥ `MIN_SCORE` (seviye gücü, trend uyumu, hacim, risk/ödül)
-5. **TP (tek):** bir sonraki karşı seviyenin %85'i (direncin hemen önü), en fazla 2 ATR. Karşı seviye çok yakınsa (yer yoksa) işlem yok.
-6. **SL:** seviyenin ve dokunuş fitilinin ötesi.
+5. **TP (tek):** bir sonraki karşı seviyenin %85'i (direncin hemen önü), en fazla 1,5 x giriş mumunun ATR'si (15dk girişte 15dk ATR, 1s girişte 1s ATR). Karşı seviye çok yakınsa (yer yoksa) işlem yok.
+6. **SL:** seviyenin ve dokunuş fitilinin ötesi; girişe en az max(0,5 saatlik ATR, %0,35) uzaklıkta (çok dar stop gürültüyle patlamasın). Boyutlandırma sinyal mumuna değil, emir anındaki canlı fiyata göre yapılır.
 7. **Korumada çıkış:** yolun %50'sinde stop girişe (komisyon payıyla) çekilir; %70'ten sonra kârın %35'i geri verilirse çıkar. 24 saatte sonuç yoksa çıkar.
-8. **Günlük sınırlar:** en fazla `MAX_TRADES_PER_DAY` işlem (varsayılan 5), aynı anda 3 pozisyon, gün içinde üst üste 2 SL'de o gün durur, gün başı bakiyenin %3'ü kaybedilirse durur.
-9. **Boyut:** 25$ ve altında işlem başına bakiyenin %1'i risk; 100$'da %2,5'e kadar yavaş artar. Kaldıraç: BTC/ETH ≤10x, volatil coinler 2-5x.
+8. **Sınırlar:** günlük işlem SAYISI sınırı yok (`MAX_TRADES_PER_DAY=0`; istersen sayı yaz). Risk frenleri duruyor: aynı anda 3 pozisyon, gün içinde üst üste 2 SL'de o gün durur, gün başı bakiyenin %3'ü kaybedilirse durur.
+9. **Boyut:** 25$ ve altında işlem başına bakiyenin %1'i risk; 100$'da %2,5'e kadar yavaş artar. Tek işlemin marjini bakiyenin en fazla %35'i (`MAX_MARGIN_PCT`). Kaldıraç: BTC/ETH ≤10x, volatil coinler 2-5x.
 10. **Telegram:** işlem açıldı / TP / SL / korumada çıkış + günlük (23:00), haftalık (pazar), aylık (ay sonu) rapor.
 
 ## Modlar

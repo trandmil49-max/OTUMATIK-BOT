@@ -57,6 +57,14 @@ def test_chasing_rejected():
 
 def test_plan_tp_is_just_before_resistance():
     lv = [Level(100.5, 6, 5)]
-    tp = plan_tp("LONG", 100.0, lv, atr1h=5.0, s=settings(tp_atr_cap=10))
+    tp = plan_tp("LONG", 100.0, lv, atr=5.0, s=settings(tp_atr_cap=10))
     assert abs(tp - (100.0 + 0.85 * 0.5)) < 1e-9 and tp < 100.5
-    assert plan_tp("LONG", 100.0, lv, atr1h=5.0, s=settings(tp_atr_cap=10, min_tp_pct=0.5)) is None
+    assert plan_tp("LONG", 100.0, lv, atr=5.0, s=settings(tp_atr_cap=10, min_tp_pct=0.5)) is None
+
+
+def test_tp_distance_follows_entry_timeframe_atr():
+    far = [Level(110.0, 6, 5)]
+    tp15 = plan_tp("LONG", 100.0, far, atr=0.30, s=S)          # 15dk giriş: küçük ATR -> yakın TP
+    tp1h = plan_tp("LONG", 100.0, far, atr=1.00, s=S)          # 1s giriş: daha uzak
+    assert abs(tp15 - 100.45) < 1e-9 and abs(tp1h - 101.5) < 1e-9 and tp15 < tp1h
+    assert plan_tp("LONG", 100.0, far, atr=0.20, s=S) is None   # hedef %0,4'ün altında -> işlem yok

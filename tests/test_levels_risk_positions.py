@@ -95,3 +95,17 @@ def test_pnl_includes_fees():
     p = calc_pnl("LONG", 100.0, 102.0, 1.0, 0.05)
     assert abs(p - (2.0 - (100 + 102) * 0.0005)) < 1e-9
     assert calc_pnl("SHORT", 100.0, 98.0, 1.0, 0.05) > 0
+
+
+def test_min_stop_distance_and_margin_cap():
+    from colde.strategy import enforce_min_sl
+    # çok dar stop (0,27%) geniş tutulur: max(0,5*ATR, %0,35)
+    sl = enforce_min_sl("LONG", 3.766, 3.756, atr1h=0.015, s=S)
+    assert abs((3.766 - sl) - 0.0075) < 1e-9 or (3.766 - sl) >= 3.766 * 0.0035 - 1e-9
+    assert sl < 3.756
+    assert enforce_min_sl("LONG", 100.0, 95.0, atr1h=1.0, s=S) == 95.0           # zaten geniş: dokunma
+    assert enforce_min_sl("SHORT", 100.0, 100.1, atr1h=1.0, s=S) > 100.1
+    # tek işlemin marjini bakiyenin %35'ini geçmez
+    sig = Signal("T-USDT", "LONG", "1h", 100, 99.9, 102, 99.5, 6, 10, 1, 1, 0, "x")
+    z = size_position(12, 12, sig, 5, Contract("T-USDT", qty_precision=2, min_notional=2), S)
+    assert z and z.margin <= 12 * 0.35 + 1e-9

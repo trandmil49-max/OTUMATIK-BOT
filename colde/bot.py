@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from dataclasses import replace
 from datetime import datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -15,7 +16,7 @@ from .positions import calc_pnl, manage_step
 from .reports import build_report
 from .risk import choose_leverage, size_position
 from .store import Store
-from .strategy import find_setup
+from .strategy import enforce_min_sl, find_setup
 
 log = logging.getLogger("bot")
 
@@ -83,7 +84,7 @@ class Bot:
         if not s.trading_enabled:
             return False, "işlem kapalı"
         ds = self.day_start_ms()
-        if self.store.opened_since(ds) >= s.max_trades_per_day:
+        if s.max_trades_per_day and self.store.opened_since(ds) >= s.max_trades_per_day:
             return False, "günlük işlem sınırı"
         if len(self.store.open_trades()) >= s.max_open_positions:
             return False, "açık pozisyon sınırı"
@@ -169,13 +170,16 @@ class Bot:
                 return False
             if (long and (sig.sl >= price or sig.tp <= price)) or (not long and (sig.sl <= price or sig.tp >= price)):
                 return False
-            rr = abs(sig.tp - price) / abs(price - sig.sl)
-            if rr < self.s.min_rr or abs(sig.tp - price) / price * 100 < self.s.min_tp_pct * 0.8:
+            # Boyutlandırmayı sinyalin mum kapanışına değil, ŞU ANKİ fiyata göre yap
+            sig = replace(sig, entry=price, sl=enforce_min_sl(sig.side, price, sig.sl, sig.atr_1h, self.s))
+            if (long and sig.sl >= price) or (not long and sig.sl <= price) or sig.sl_pct > self.s.max_sl_pct:
+                log.info("%s atlandı: stop mesafesi uygun değil", sig.symbol)
+                return False
+            if sig.rr < self.s.min_rr or sig.tp_pct < self.s.min_tp_pct * 0.8:
                 log.info("%s atlandı: güncel fiyatta risk/ödül bozuldu", sig.symbol)
                 return False
             balance, avail = await self.broker.balance()
-            sl_pct = abs(price - sig.sl) / price * 100
-            lev = choose_leverage(sig.symbol, sig.atr_1h / price * 100, sl_pct, contract.max_leverage)
+            lev = choose_leverage(sig.symbol, sig.atr_1h / price * 100, sig.sl_pct, contract.max_leverage)
             sz = size_position(balance, avail, sig, lev, contract, self.s)
             if not sz:
                 log.info("%s atlandı: pozisyon boyutu minimumun altında", sig.symbol)
@@ -189,7 +193,7 @@ class Bot:
             now = self.now_ms()
             t = {"symbol": sig.symbol, "side": sig.side, "tf": sig.tf, "status": "open", "mode": self.s.mode,
                  "entry": fill.price, "sl": sig.sl, "tp": sig.tp, "init_sl": sig.sl, "qty": sz.qty,
-                 "leverage": fill.leverage, "risk_usd": sz.risk_usd, "notional": sz.notional,
+                 "leverage": fill.leverage, "risk_usd": sz.qty * abs(fill.price - sig.sl), "notional": sz.notional,
                  "opened_ms": now, "balance_open": balance, "peak": fill.price, "protected": 0, "trailing": 0,
                  "sl_order_id": fill.sl_order_id, "tp_order_id": fill.tp_order_id, "last_check_ms": None,
                  "level": sig.level, "score": sig.score}

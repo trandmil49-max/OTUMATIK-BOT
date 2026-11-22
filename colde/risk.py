@@ -53,7 +53,7 @@ def size_position(balance: float, available: float, sig: Signal, leverage: int,
         return None
     risk_usd = balance * risk_pct(balance, s) / 100
     qty = risk_usd / sl_dist
-    max_margin = available * 0.9
+    max_margin = min(available * 0.9, balance * s.max_margin_pct / 100)
     if qty * sig.entry / leverage > max_margin:
         qty = max_margin * leverage / sig.entry
     qty = floor_to(qty, c.qty_precision)

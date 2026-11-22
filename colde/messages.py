@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 
 
 def tr_num(x: float, decimals: int, strip: bool = True) -> str:
@@ -34,7 +35,11 @@ def pct(x: float, sign: bool = True) -> str:
 
 
 def sym(symbol: str) -> str:
-    return symbol.replace("-", "")
+    """BTC-USDT -> BTCUSDT; NCCO7241NATGAS2USD-USDT -> NATGAS2USD (emtia/hisse kodundaki önek atılır)."""
+    base = symbol[:-5] if symbol.endswith("-USDT") else symbol.replace("-", "")
+    if base.startswith("NC"):
+        return re.sub(r"^NC(?:CO|SK|FX|SI)\d*", "", base) or base
+    return base + "USDT"
 
 
 MODE_TAG = {"paper": " [PAPER]", "vst": " [VST]", "live": ""}

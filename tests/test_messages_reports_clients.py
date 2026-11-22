@@ -128,3 +128,9 @@ def test_vst_virtual_balance_tracks_realized_pnl():
     st.insert_trade(dict(symbol="B-USDT", side="LONG", status="open", mode="vst", pnl=None, notional=10, leverage=2))
     bal, avail = asyncio.run(b.balance())
     assert abs(bal - 12.5) < 1e-9 and abs(avail - 7.5) < 1e-9
+
+
+def test_symbol_display_names():
+    from colde.messages import sym
+    assert sym("BTC-USDT") == "BTCUSDT" and sym("XUSD-USDT") == "XUSDUSDT"
+    assert sym("NCCO7241NATGAS2USD-USDT") == "NATGAS2USD" and sym("NCCOGOLD2USD-USDT") == "GOLD2USD"

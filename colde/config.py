@@ -38,7 +38,7 @@ class Settings:
     send_startup_message: bool = True
 
     # --- günlük sınırlar (kumar yok) ---
-    max_trades_per_day: int = 5
+    max_trades_per_day: int = 0          # 0 = günlük işlem sayısı sınırı YOK
     max_open_positions: int = 3
     max_consecutive_sl: int = 2          # gün içinde üst üste 2 SL -> o gün dur
     daily_loss_limit_pct: float = 3.0    # gün başı bakiyenin %3'ü kaybedilirse dur
@@ -58,15 +58,18 @@ class Settings:
     setup_lookback: int = 8
     min_tp_pct: float = 0.40
     tp_fraction: float = 0.85            # TP = giriş ile bir sonraki seviye arasının %85'i
-    tp_atr_cap: float = 2.0
+    tp_atr_cap: float = 1.5              # TP en fazla 1,5 x (giriş mumunun) ATR'si uzakta
     min_rr: float = 0.5
     max_sl_pct: float = 2.5
+    min_sl_atr: float = 0.5              # stop en az 0,5 saatlik ATR uzakta (gürültüye takılmasın)
+    min_sl_pct: float = 0.35             # ve en az %0,35 uzakta
     watch_atr: float = 1.5
     max_entry_drift_atr: float = 0.5
 
     # --- risk ---
     risk_low_pct: float = 1.0            # bakiye <= risk_low_balance iken işlem başına risk %
     risk_high_pct: float = 2.5           # bakiye >= risk_high_balance iken
+    max_margin_pct: float = 35.0         # tek işlemin marjini bakiyenin en fazla %35'i
     risk_low_balance: float = 25.0
     risk_high_balance: float = 100.0
 
@@ -98,7 +101,7 @@ class Settings:
             balance_override=_f("BALANCE_OVERRIDE", 0.0),
             trading_enabled=_b("TRADING_ENABLED", True),
             send_startup_message=_b("SEND_STARTUP_MESSAGE", True),
-            max_trades_per_day=_i("MAX_TRADES_PER_DAY", 5),
+            max_trades_per_day=_i("MAX_TRADES_PER_DAY", 0),
             max_open_positions=_i("MAX_OPEN_POSITIONS", 3),
             max_consecutive_sl=_i("MAX_CONSECUTIVE_SL", 2),
             daily_loss_limit_pct=_f("DAILY_LOSS_LIMIT_PCT", 3.0),
@@ -113,9 +116,12 @@ class Settings:
             confirm_closes=_i("CONFIRM_CLOSES", 2),
             min_tp_pct=_f("MIN_TP_PCT", 0.40),
             tp_fraction=_f("TP_FRACTION", 0.85),
-            tp_atr_cap=_f("TP_ATR_CAP", 2.0),
+            tp_atr_cap=_f("TP_ATR_CAP", 1.5),
             min_rr=_f("MIN_RR", 0.5),
             max_sl_pct=_f("MAX_SL_PCT", 2.5),
+            min_sl_atr=_f("MIN_SL_ATR", 0.5),
+            min_sl_pct=_f("MIN_SL_PCT", 0.35),
+            max_margin_pct=_f("MAX_MARGIN_PCT", 35.0),
             risk_low_pct=_f("RISK_LOW_PCT", 1.0),
             risk_high_pct=_f("RISK_HIGH_PCT", 2.5),
             fee_pct=_f("FEE_PCT", 0.05),

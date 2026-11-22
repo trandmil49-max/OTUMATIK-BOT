@@ -10,7 +10,13 @@ from .models import Level, LevelInfo, Signal
 TF_LABEL = {"15m": "15dk", "1h": "1s"}
 
 
-def plan_tp(side: str, entry: float, levels: list, atr1h: float, s: Settings) -> Optional[float]:
+def enforce_min_sl(side: str, entry: float, sl: float, atr1h: float, s: Settings) -> float:
+    """Stop, girişe en az max(0,5 ATR, %0,35) uzakta olsun; çok dar stop gürültüyle patlar."""
+    d = max(s.min_sl_atr * atr1h, entry * s.min_sl_pct / 100)
+    return min(sl, entry - d) if side == "LONG" else max(sl, entry + d)
+
+
+def plan_tp(side: str, entry: float, levels: list, atr: float, s: Settings) -> Optional[float]:
     """TP: bir sonraki karşı seviyenin hemen önü. Yer yoksa (seviye çok yakınsa) işlem yok."""
     if side == "LONG":
         opp = [lv.price for lv in levels if lv.price > entry]
@@ -18,9 +24,9 @@ def plan_tp(side: str, entry: float, levels: list, atr1h: float, s: Settings) ->
     else:
         opp = [lv.price for lv in levels if lv.price < entry]
         nearest = max(opp) if opp else None
-    cap = s.tp_atr_cap * atr1h
+    cap = s.tp_atr_cap * atr
     if nearest is None:
-        dist = 1.0 * atr1h                       # bilinen seviye yok -> 1 ATR
+        dist = 1.0 * atr                         # bilinen seviye yok -> 1 ATR
     else:
         dist = min(s.tp_fraction * abs(nearest - entry), cap)
     if dist <= 0 or dist / entry * 100 < s.min_tp_pct:
@@ -68,7 +74,8 @@ def _setup(symbol: str, side: str, tf: str, c: list, L: Level, info: LevelInfo,
             return None
 
     entry = last.c
-    tp = plan_tp(side, entry, info.levels, info.atr1h, s)
+    sl = enforce_min_sl(side, entry, sl, info.atr1h, s)
+    tp = plan_tp(side, entry, info.levels, atr_tf, s)
     if tp is None:
         return None
     sig_sl_pct = abs(entry - sl) / entry * 100
