@@ -58,8 +58,8 @@ class PaperBroker:
 class LiveBroker:
     """BingX emirleri (vst = demo, live = gerçek). Giriş MARKET; SL ve TP ayrı kapanış emirleri."""
 
-    def __init__(self, client: BingXClient, s: Settings):
-        self.c, self.s = client, s
+    def __init__(self, client: BingXClient, s: Settings, store: Optional[Store] = None):
+        self.c, self.s, self.store = client, s, store
         self.dual: Optional[bool] = None
 
     async def _mode(self) -> bool:
@@ -70,7 +70,11 @@ class LiveBroker:
     async def balance(self) -> tuple:
         bal, avail = await self.c.balance()
         if self.s.balance_override > 0:
-            return self.s.balance_override, self.s.balance_override
+            # Demo hesapta büyük bakiye var; 12$'lık hesap gibi boyutlandır ve kâr/zararı üstüne ekle.
+            realized = self.store.pnl_sum(self.s.mode) if self.store else 0.0
+            virt = self.s.balance_override + realized
+            used = sum(t["notional"] / max(t["leverage"], 1) for t in self.store.open_trades()) if self.store else 0.0
+            return virt, max(virt - used, 0.0)
         return bal, avail
 
     @staticmethod

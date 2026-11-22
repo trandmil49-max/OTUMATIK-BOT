@@ -10,17 +10,23 @@ from tests.helpers import settings
 
 def test_number_formats():
     assert price(97250.0) == "97.250" and price(0.00123) == "0,00123" and price(2.5) == "2,5"
-    assert money(0.18, True) == "+$0,18" and money(-0.12, True) == "−$0,12" and money(12.4) == "$12,4"
+    assert money(0.18, True) == "+$0,18" and money(-0.12, True) == "−$0,12" and money(12.4) == "$12,40"
 
 
 def test_message_shapes():
     t = dict(symbol="BTC-USDT", side="LONG", entry=97250.0, tp=98400.0, sl=96700.0, leverage=5, risk_usd=0.12,
              balance_open=12.4, exit_reason="tp", pnl=0.18, balance_close=12.58)
     m = open_msg(t, "1s destek tuttu, 2 mum onayı")
-    assert "Giriş: 97.250" in m and "TP: 98.400 (+1,2%)" in m and "SL: 96.700 (−0,6%)" in m and "Kaldıraç: 5x" in m
-    assert close_msg(t).startswith("✅ TP oldu · BTCUSDT long")
-    assert close_msg({**t, "exit_reason": "sl", "pnl": -0.12}).startswith("❌ SL oldu")
-    assert close_msg({**t, "exit_reason": "trail", "pnl": 0.05}).startswith("🛡 Korumada çıkış")
+    assert "Giriş: 97.250" in m and "Hedef (TP): 98.400 (+1,2%)" in m and "Stop (SL): 96.700 (−0,6%)" in m
+    assert "5x · Risk: $0,12" in m and "Bakiye: $12,40" in m and len(m.splitlines()) == 7
+    t["exit_price"] = 98400.0
+    assert close_msg(t).startswith("✅ TP oldu · BTCUSDT · LONG")
+    assert "Giriş 97.250 → Çıkış 98.400" in close_msg(t) and "Kâr: +$0,18" in close_msg(t)
+    assert close_msg({**t, "exit_reason": "sl", "pnl": -0.12}).startswith("🛑 SL oldu")
+    assert close_msg({**t, "exit_reason": "trail", "pnl": 0.05}).startswith("🔒 Kâr korundu")
+    tiny = close_msg({**t, "exit_reason": "protected", "pnl": -0.003})
+    assert tiny.startswith("⚖️ Başa baş çıkış") and "−$0,003" in tiny and "−$0 " not in tiny
+    assert "[VST]" in open_msg({**t, "mode": "vst"}, "x") and "[PAPER]" not in open_msg(t, "x")
 
 
 def test_report():
@@ -110,3 +116,15 @@ def test_live_broker_closes_position_if_sl_cannot_be_placed():
         pass
     orders = [c[1] for c in fc.calls if c[0] == "order"]
     assert orders[-1]["type"] == "MARKET" and orders[-1]["side"] == "SELL"     # SL'siz pozisyon bırakılmadı
+
+
+def test_vst_virtual_balance_tracks_realized_pnl():
+    from colde.store import Store
+    st = Store(":memory:")
+    fc = FakeClient()
+    b = LiveBroker(fc, settings(mode="vst", balance_override=12.0), st)
+    assert asyncio.run(b.balance()) == (12.0, 12.0)
+    st.insert_trade(dict(symbol="A-USDT", side="LONG", status="closed", mode="vst", pnl=0.5, notional=10, leverage=2))
+    st.insert_trade(dict(symbol="B-USDT", side="LONG", status="open", mode="vst", pnl=None, notional=10, leverage=2))
+    bal, avail = asyncio.run(b.balance())
+    assert abs(bal - 12.5) < 1e-9 and abs(avail - 7.5) < 1e-9

@@ -66,6 +66,10 @@ class Store:
         r = self._rows("SELECT * FROM trades WHERE status='closed' AND symbol=? ORDER BY closed_ms DESC LIMIT 1", (symbol,))
         return r[0] if r else None
 
+    def pnl_sum(self, mode: str) -> float:
+        r = self._rows("SELECT COALESCE(SUM(pnl),0) AS p FROM trades WHERE status='closed' AND mode=?", (mode,))
+        return float(r[0]["p"])
+
     def kv_get(self, k: str, default: Optional[str] = None) -> Optional[str]:
         r = self._rows("SELECT v FROM kv WHERE k=?", (k,))
         return r[0]["v"] if r else default

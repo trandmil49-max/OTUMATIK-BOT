@@ -40,14 +40,17 @@ async def run() -> None:
     tg = Telegram(s.telegram_token, s.telegram_chat_id)
     public = BingXClient(base=BASE["live"])
     broker = PaperBroker(store, s) if s.mode == "paper" else LiveBroker(
-        BingXClient(s.bingx_api_key, s.bingx_api_secret, base=BASE[s.mode]), s)
+        BingXClient(s.bingx_api_key, s.bingx_api_secret, base=BASE[s.mode]), s, store)
     bot = Bot(s, public, broker, store, tg)
 
     await bot.refresh_contracts()
     await bot.refresh_levels()
     if s.send_startup_message:
         bal, _ = await broker.balance()
-        await tg.send(f"▶️ COLDE-BOT başladı · mod: {s.mode.upper()} · bakiye: ${bal:,.2f}")
+        info = {"paper": "🧪 Mod: PAPER (sanal para, BingX'te işlem AÇILMAZ)",
+                "vst": "🧪 Mod: VST (BingX demo hesabında işlem açılır)",
+                "live": "💰 Mod: CANLI (gerçek para, BingX'te işlem açılır)"}[s.mode]
+        await tg.send(f"▶️ COLDE-BOT başladı\n{info}\n💼 Bakiye: ${bal:,.2f}\n🔎 Taranan: {len(bot.levels)} parite")
 
     async def scan_loop():
         step = 900

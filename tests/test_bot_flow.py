@@ -51,7 +51,7 @@ def test_scan_opens_trade_and_sends_short_message():
     assert len(opened) == 1
     t = store.open_trades()[0]
     assert t["side"] == "LONG" and t["sl"] < t["entry"] < t["tp"] and t["qty"] > 0 and t["leverage"] >= 1
-    assert "LONG açıldı · TESTUSDT" in tg.sent[0] and "Neden:" in tg.sent[0]
+    assert "TESTUSDT · LONG açıldı [PAPER]" in tg.sent[0] and "💡" in tg.sent[0]
     assert len(tg.sent[0].splitlines()) == 7                      # kısa mesaj
     # aynı parite tekrar açılmaz
     assert asyncio.run(bot.scan()) == []
@@ -113,7 +113,7 @@ def test_protected_exit_message():
     asyncio.run(bot.manage())
     c = store.get_trade(t["id"])
     assert c["status"] == "closed" and c["exit_reason"] in ("trail", "protected") and c["pnl"] > 0
-    assert "Korumada çıkış" in tg.sent[-1]
+    assert "Kâr korundu" in tg.sent[-1] and "Giriş" in tg.sent[-1]
 
 
 def test_stale_data_skipped():

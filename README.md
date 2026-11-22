@@ -23,6 +23,14 @@ Amaç: günde az ama kaliteli işlem. Kumar yok: setup yoksa işlem yok.
 - `vst`: BingX demo hesabı (sanal USDT). Bakiye çok büyük olduğu için `BALANCE_OVERRIDE=12` ver.
 - `live`: gerçek para.
 
+## İşlemleri BingX'te görmek için
+`MODE=paper` hiçbir zaman BingX'e emir göndermez: sadece Telegram'a bildirim atar ve sahte bakiyeyi kendi veritabanında tutar. İşlemlerin BingX hesabında görünmesi için:
+1. **BingX API anahtarı** oluştur (sadece *Futures işlem* izni, çekim izni YOK, mümkünse IP kısıtı koy).
+2. Railway Variables: `BINGX_API_KEY`, `BINGX_API_SECRET`.
+3. `MODE=vst` → BingX **demo hesabında** (sanal USDT) işlem açar. Demo bakiye büyük olduğu için `BALANCE_OVERRIDE=12` ekle; bot 12$'lık hesap gibi boyutlandırır ve kâr/zararı bakiyeye ekler.
+4. Demo'da bir hafta sorunsuz çalışırsa `MODE=live` (gerçek para). `BALANCE_OVERRIDE`'ı sil.
+Telegram mesajlarında mod etiketi görünür: `[PAPER]`, `[VST]`, canlıda etiket yok.
+
 ## Railway kurulumu
 1. Bu klasörü GitHub'a yükle (dosya sayısı az, web upload yeter).
 2. Railway → New Project → GitHub repo.
